@@ -23,7 +23,10 @@ def run_historical_crisis(portfolio_returns: pd.Series, portfolio_weights: dict)
     """Replay historical crisis periods using benchmark drawdown as a proxy."""
     results = {}
     spy = yf.download(BENCHMARK, start="1999-01-01", progress=False, auto_adjust=True)
-    spy_ret = spy["Close"].pct_change().dropna()
+    spy_close = spy["Close"]
+    if isinstance(spy_close, pd.DataFrame):
+        spy_close = spy_close.iloc[:, 0]
+    spy_ret = spy_close.pct_change().dropna()
 
     for name, (start, end) in CRISIS_PERIODS.items():
         period_spy = spy_ret.loc[start:end]
@@ -70,7 +73,10 @@ def run_rate_hike_scenario(
     import yfinance as yf
 
     tlt = yf.download("TLT", start=portfolio_returns.index[0].strftime("%Y-%m-%d"), progress=False, auto_adjust=True)
-    tlt_ret = tlt["Close"].pct_change().dropna()
+    tlt_close = tlt["Close"]
+    if isinstance(tlt_close, pd.DataFrame):
+        tlt_close = tlt_close.iloc[:, 0]
+    tlt_ret = tlt_close.pct_change().dropna()
 
     aligned = pd.concat([portfolio_returns, tlt_ret], axis=1).dropna()
     if len(aligned) < 30:

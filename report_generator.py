@@ -191,7 +191,7 @@ def generate_report(portfolio_df: pd.DataFrame, lookback_days: int = 252,
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"Report written → {output_path}")
+    print(f"Report written -> {output_path}")
     return html
 
 
