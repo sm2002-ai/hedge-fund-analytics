@@ -84,14 +84,11 @@ class TestRollingVaR:
 
 
 class TestSharpe:
-    @pytest.mark.xfail(
-        reason="Known bug: compute_sharpe checks excess.std() == 0 exactly, but "
-        "pandas computes std of a constant series as ~2e-19 (FP noise). "
-        "Constant-return inputs slip past the guard and produce huge ratios. "
-        "Fix: compare against a small tolerance, or check variance via np.isclose."
-    )
     def test_zero_volatility_returns_zero(self, constant_returns):
         assert compute_sharpe(constant_returns, rf=0.0) == 0.0
+
+    def test_zero_volatility_returns_zero_with_nonzero_rf(self, constant_returns):
+        assert compute_sharpe(constant_returns, rf=0.05) == 0.0
 
     def test_positive_for_positive_excess(self):
         rng = np.random.default_rng(7)
@@ -145,11 +142,6 @@ class TestMaxDrawdown:
         res = compute_max_drawdown(returns)
         assert res["max_drawdown"] == pytest.approx(0.0)
 
-    @pytest.mark.xfail(
-        reason="Known bug: with a non-datetime index, rolling_max[:trough_idx] is "
-        "empty when the series is monotonic (slice is exclusive on int index), "
-        "so idxmax raises ValueError. Fix: early-return when drawdown.min() == 0."
-    )
     def test_no_drawdown_for_monotonic_returns_int_index(self):
         returns = pd.Series([0.01] * 30)
         res = compute_max_drawdown(returns)
@@ -167,11 +159,10 @@ class TestMaxDrawdown:
 
 
 class TestCalmar:
-    @pytest.mark.xfail(
-        reason="Known bug: Calmar delegates to compute_max_drawdown, which fails "
-        "on a non-datetime index when recovery is computed (subtracts ints, "
-        "then accesses .days). Fix: only compute .days when index is datetime-like."
-    )
+    def test_zero_drawdown_returns_zero(self):
+        returns = pd.Series([0.001] * 30)
+        assert compute_calmar(returns) == 0.0
+
     def test_positive_for_positive_returns_with_int_index(self):
         rng = np.random.default_rng(5)
         returns = pd.Series(rng.normal(0.002, 0.01, 252))

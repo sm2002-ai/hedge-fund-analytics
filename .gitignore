@@ -4,6 +4,8 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+pytest-output.txt
+pytest-report.xml
 *.egg-info/
 .env
 .venv/

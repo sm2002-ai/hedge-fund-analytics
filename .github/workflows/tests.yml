@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        id: pytest
+        run: |
+          set -o pipefail
+          python -m pytest tests/ -v --tb=short --junitxml=pytest-report.xml \
+            2>&1 | tee pytest-output.txt
+        continue-on-error: true
+
+      - name: Upload test report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pytest-report-${{ github.run_number }}
+          path: |
+            pytest-output.txt
+            pytest-report.xml
+          retention-days: 30
+
+      - name: Email test results
+        if: always()
+        env:
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          PYTEST_OUTCOME: ${{ steps.pytest.outcome }}
+          GH_REPO: ${{ github.repository }}
+          GH_REF: ${{ github.ref_name }}
+          GH_SHA: ${{ github.sha }}
+          GH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/email_test_results.py
+
+      - name: Fail job if tests failed
+        if: steps.pytest.outcome != 'success'
+        run: exit 1
