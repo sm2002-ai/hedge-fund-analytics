@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ fund_name }} — {{ report_date }}</title>
+<style>
+  :root {
+    --navy: #003153;
+    --gold: #F4C430;
+    --slate: #708090;
+    --light: #F5F5F0;
+    --white: #FFFFFF;
+    --red: #C73E1D;
+    --green: #2A7F4F;
+    --text: #1A1A2E;
+    --border: #D8D8D8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: #EBEBEB;
+    line-height: 1.5;
+  }
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--white);
+  }
+
+  /* ── HEADER ── */
+  .report-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 32px 40px;
+    position: relative;
+  }
+  .report-header::after {
+    content: '';
+    display: block;
+    height: 4px;
+    background: var(--gold);
+    margin-top: 24px;
+  }
+  .fund-name {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .report-subtitle {
+    font-size: 13px;
+    opacity: 0.75;
+    letter-spacing: 0.3px;
+  }
+  .header-meta {
+    margin-top: 16px;
+    display: flex;
+    gap: 40px;
+    font-size: 12px;
+    opacity: 0.85;
+  }
+  .header-meta span { display: flex; flex-direction: column; }
+  .header-meta strong { font-size: 15px; margin-top: 2px; }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--navy);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .kpi-card {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .kpi-label {
+    font-size: 10px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+  .kpi-value.positive { color: var(--green); }
+  .kpi-value.negative { color: var(--red); }
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 3px;
+  }
+
+  /* ── TABLES ── */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 12px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead tr {
+    background: var(--navy);
+    color: var(--white);
+  }
+  thead th {
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--light); }
+  tbody tr:hover { background: #E8EEF5; }
+  tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .positive { color: var(--green); font-weight: 600; }
+  .negative { color: var(--red); font-weight: 600; }
+
+  /* ── CHARTS ── */
+  .chart-wrap {
+    text-align: center;
+    margin: 16px 0;
+  }
+  .chart-wrap img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+  .chart-caption {
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* ── METRICS TWO-COL ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .metric-block { }
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--border);
+    font-size: 12px;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-name { color: var(--slate); }
+  .metric-val { font-weight: 600; }
+
+  /* ── ATTRIBUTION ── */
+  .attribution-bar-wrap { margin: 8px 0; }
+  .attr-row {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 11px;
+  }
+  .attr-label { width: 160px; color: var(--slate); }
+  .attr-bar-bg { flex: 1; height: 14px; background: #EAEAEA; border-radius: 2px; overflow: hidden; position: relative; }
+  .attr-bar { height: 100%; border-radius: 2px; }
+  .attr-value { width: 70px; text-align: right; font-weight: 600; font-size: 11px; padding-left: 8px; }
+
+  /* ── STRESS TABLE ── */
+  .stress-good { color: var(--green); }
+  .stress-bad { color: var(--red); }
+
+  /* ── COMPLIANCE ── */
+  .compliance-box {
+    background: var(--light);
+    border-left: 4px solid var(--navy);
+    padding: 16px 20px;
+    border-radius: 0 4px 4px 0;
+    font-size: 11px;
+    color: var(--slate);
+    line-height: 1.7;
+  }
+  .compliance-box strong { color: var(--navy); display: block; margin-bottom: 6px; font-size: 12px; }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.6);
+    padding: 20px 40px;
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  .footer-disclaimer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
+  .badge-buy { background: #D4EDDA; color: #155724; }
+  .badge-hold { background: #FFF3CD; color: #856404; }
+  .badge-watch { background: #CCE5FF; color: #004085; }
+
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .metrics-grid { grid-template-columns: 1fr; }
+    .section { padding: 20px 16px; }
+    .report-header { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="report-header">
+    <div class="fund-name">{{ fund_name }}</div>
+    <div class="report-subtitle">Institutional Portfolio Analytics Report · {{ report_date }}</div>
+    <div class="header-meta">
+      <span>NAV <strong>${{ "{:,.2f}".format(nav) }}</strong></span>
+      <span>Holdings <strong>{{ n_holdings }}</strong></span>
+      <span>Total Return <strong class="{{ 'positive' if total_return >= 0 else 'negative' }}">{{ "{:+.2f}".format(total_return * 100) }}%</strong></span>
+      <span>vs Benchmark <strong class="{{ 'positive' if active_return >= 0 else 'negative' }}">{{ "{:+.2f}".format(active_return * 100) }}%</strong></span>
+    </div>
+  </div>
+
+  <!-- ═══ EXECUTIVE SUMMARY ═══ -->
+  <div class="section">
+    <div class="section-title">Executive Summary</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Annualized Return</div>
+        <div class="kpi-value {{ 'positive' if metrics.annualized_return >= 0 else 'negative' }}">{{ "{:+.1f}".format(metrics.annualized_return * 100) }}%</div>
+        <div class="kpi-sub">vs {{ "{:+.1f}".format(bench_annual * 100) }}% benchmark</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Sharpe Ratio</div>
+        <div class="kpi-value {{ 'positive' if metrics.sharpe >= 1 else ('negative' if metrics.sharpe < 0 else '') }}">{{ "{:.2f}".format(metrics.sharpe) }}</div>
+        <div class="kpi-sub">Risk-adjusted performance</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Max Drawdown</div>
+        <div class="kpi-value negative">{{ "{:.1f}".format(metrics.max_drawdown * 100) }}%</div>
+        <div class="kpi-sub">Peak to trough</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Information Ratio</div>
+        <div class="kpi-value {{ 'positive' if metrics.information_ratio >= 0 else 'negative' }}">{{ "{:.2f}".format(metrics.information_ratio) }}</div>
+        <div class="kpi-sub">Active return / tracking error</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Beta</div>
+        <div class="kpi-value">{{ "{:.2f}".format(metrics.beta) }}</div>
+        <div class="kpi-sub">vs {{ benchmark_label }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Annual Alpha</div>
+        <div class="kpi-value {{ 'positive' if metrics.alpha_annual >= 0 else 'negative' }}">{{ "{:+.1f}".format(metrics.alpha_annual * 100) }}%</div>
+        <div class="kpi-sub">Jensen's Alpha</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Sortino Ratio</div>
+        <div class="kpi-value {{ 'positive' if metrics.sortino >= 1 else '' }}">{{ "{:.2f}".format(metrics.sortino) }}</div>
+        <div class="kpi-sub">Downside-adj. performance</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">VaR 95% (Daily)</div>
+        <div class="kpi-value negative">{{ "{:.2f}".format(metrics.var_95_historical * 100) }}%</div>
+        <div class="kpi-sub">Historical simulation</div>
+      </div>
+    </div>
+
+    {% if charts.cumulative_performance %}
+    <div class="chart-wrap">
+      <img src="data:image/png;base64,{{ charts.cumulative_performance }}" alt="Cumulative Performance">
+      <div class="chart-caption">Cumulative portfolio vs {{ benchmark_label }} — {{ lookback_days }}-day lookback period</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ RISK METRICS ═══ -->
+  <div class="section">
+    <div class="section-title">Risk Metrics</div>
+    <div class="metrics-grid">
+      <div class="metric-block">
+        <div class="metric-row"><span class="metric-name">VaR 95% Parametric</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.var_95_parametric * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">VaR 99% Parametric</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.var_99_parametric * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">VaR 95% Historical</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.var_95_historical * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">VaR 99% Historical</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.var_99_historical * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">CVaR / ES (95%)</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.cvar_95 * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">CVaR / ES (99%)</span><span class="metric-val negative">{{ "{:.3f}".format(metrics.cvar_99 * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">Annualized Volatility</span><span class="metric-val">{{ "{:.2f}".format(metrics.annualized_volatility * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">Tracking Error (Ann.)</span><span class="metric-val">{{ "{:.2f}".format(metrics.tracking_error * 100) }}%</span></div>
+      </div>
+      <div class="metric-block">
+        <div class="metric-row"><span class="metric-name">Max Drawdown</span><span class="metric-val negative">{{ "{:.2f}".format(metrics.max_drawdown * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">DD Peak Date</span><span class="metric-val">{{ metrics.max_drawdown_peak }}</span></div>
+        <div class="metric-row"><span class="metric-name">DD Trough Date</span><span class="metric-val">{{ metrics.max_drawdown_trough }}</span></div>
+        <div class="metric-row"><span class="metric-name">Recovery Date</span><span class="metric-val">{{ metrics.max_drawdown_recovery or "Ongoing" }}</span></div>
+        <div class="metric-row"><span class="metric-name">Recovery Days</span><span class="metric-val">{{ metrics.max_drawdown_recovery_days or "N/A" }}</span></div>
+        <div class="metric-row"><span class="metric-name">Win Rate vs Benchmark</span><span class="metric-val">{{ "{:.1f}".format(metrics.win_loss.win_rate * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">Calmar Ratio</span><span class="metric-val">{{ "{:.2f}".format(metrics.calmar) }}</span></div>
+        <div class="metric-row"><span class="metric-name">Profit Factor</span><span class="metric-val">{{ "{:.2f}".format(metrics.win_loss.profit_factor) }}</span></div>
+      </div>
+    </div>
+    {% if charts.var_distribution %}
+    <div class="chart-wrap" style="margin-top:16px;">
+      <img src="data:image/png;base64,{{ charts.var_distribution }}" alt="VaR Distribution">
+    </div>
+    {% endif %}
+    {% if charts.drawdown %}
+    <div class="chart-wrap">
+      <img src="data:image/png;base64,{{ charts.drawdown }}" alt="Drawdown">
+    </div>
+    {% endif %}
+    {% if charts.rolling_var %}
+    <div class="chart-wrap">
+      <img src="data:image/png;base64,{{ charts.rolling_var }}" alt="Rolling VaR">
+      <div class="chart-caption">Rolling 30/60/90-day Value-at-Risk (95% confidence, historical simulation)</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ PERFORMANCE ATTRIBUTION ═══ -->
+  <div class="section">
+    <div class="section-title">Performance Attribution</div>
+    {% if attribution %}
+    <div class="kpi-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:16px;">
+      <div class="kpi-card">
+        <div class="kpi-label">Allocation Effect</div>
+        <div class="kpi-value {{ 'positive' if attribution.total_allocation >= 0 else 'negative' }}">{{ "{:+.3f}".format(attribution.total_allocation * 100) }}%</div>
+        <div class="kpi-sub">Sector weight decisions</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Selection Effect</div>
+        <div class="kpi-value {{ 'positive' if attribution.total_selection >= 0 else 'negative' }}">{{ "{:+.3f}".format(attribution.total_selection * 100) }}%</div>
+        <div class="kpi-sub">Stock picking</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Active Return</div>
+        <div class="kpi-value {{ 'positive' if attribution.total_active >= 0 else 'negative' }}">{{ "{:+.3f}".format(attribution.total_active * 100) }}%</div>
+        <div class="kpi-sub">Brinson-Fachler</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Sector</th>
+          <th class="num">Port Wt</th>
+          <th class="num">Bench Wt</th>
+          <th class="num">Port Ret</th>
+          <th class="num">Alloc Effect</th>
+          <th class="num">Select Effect</th>
+          <th class="num">Total Effect</th>
+        </tr></thead>
+        <tbody>
+        {% for row in attribution.sectors %}
+        <tr>
+          <td>{{ row.sector }}</td>
+          <td class="num">{{ "{:.1f}".format(row.port_weight * 100) }}%</td>
+          <td class="num">{{ "{:.1f}".format(row.bench_weight * 100) }}%</td>
+          <td class="num {{ 'positive' if row.port_return >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.port_return * 100) }}%</td>
+          <td class="num {{ 'positive' if row.allocation_effect >= 0 else 'negative' }}">{{ "{:+.4f}".format(row.allocation_effect * 100) }}%</td>
+          <td class="num {{ 'positive' if row.selection_effect >= 0 else 'negative' }}">{{ "{:+.4f}".format(row.selection_effect * 100) }}%</td>
+          <td class="num {{ 'positive' if row.total_effect >= 0 else 'negative' }}">{{ "{:+.4f}".format(row.total_effect * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ FACTOR EXPOSURE ═══ -->
+  <div class="section">
+    <div class="section-title">Factor Exposure (Fama-French 5-Factor)</div>
+    {% if factor_data %}
+    <div class="metrics-grid">
+      <div class="metric-block">
+        <div class="metric-row"><span class="metric-name">Annual Alpha (Jensen's)</span><span class="metric-val {{ 'positive' if factor_data.loadings.alpha >= 0 else 'negative' }}">{{ "{:+.2f}".format(factor_data.loadings.alpha * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">Market Beta (Mkt-RF)</span><span class="metric-val">{{ "{:.3f}".format(factor_data.loadings.mkt_beta) }}</span></div>
+        <div class="metric-row"><span class="metric-name">SMB (Size)</span><span class="metric-val">{{ "{:.3f}".format(factor_data.loadings.smb) }}</span></div>
+        <div class="metric-row"><span class="metric-name">HML (Value)</span><span class="metric-val">{{ "{:.3f}".format(factor_data.loadings.hml) }}</span></div>
+        <div class="metric-row"><span class="metric-name">RMW (Profitability)</span><span class="metric-val">{{ "{:.3f}".format(factor_data.loadings.rmw) }}</span></div>
+        <div class="metric-row"><span class="metric-name">CMA (Investment)</span><span class="metric-val">{{ "{:.3f}".format(factor_data.loadings.cma) }}</span></div>
+        <div class="metric-row"><span class="metric-name">R-Squared</span><span class="metric-val">{{ "{:.1f}".format(factor_data.loadings.r_squared * 100) }}%</span></div>
+        <div class="metric-row"><span class="metric-name">Alpha p-value</span><span class="metric-val">{{ "{:.4f}".format(factor_data.loadings.alpha_pvalue) }}</span></div>
+      </div>
+      <div class="metric-block">
+        <div style="font-size:11px; color:var(--slate); margin-bottom:8px; font-weight:600; text-transform:uppercase;">Factor Return Attribution (Annual)</div>
+        {% for key, label in [('mkt_contribution','Market'), ('smb_contribution','SMB Size'), ('hml_contribution','HML Value'), ('rmw_contribution','RMW Profit.'), ('cma_contribution','CMA Invest.'), ('alpha_contribution','Alpha')] %}
+        <div class="metric-row">
+          <span class="metric-name">{{ label }}</span>
+          <span class="metric-val {{ 'positive' if factor_data.attribution[key] >= 0 else 'negative' }}">{{ "{:+.2f}".format(factor_data.attribution[key] * 100) }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% if charts.factor_heatmap %}
+    <div class="chart-wrap" style="margin-top:16px;">
+      <img src="data:image/png;base64,{{ charts.factor_heatmap }}" alt="Factor Heatmap">
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- ═══ STRESS TESTING ═══ -->
+  <div class="section">
+    <div class="section-title">Stress Testing</div>
+    {% if stress_data %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Scenario</th>
+          <th class="num">Market Impact</th>
+          <th class="num">Portfolio Impact</th>
+          <th class="num">Relative Performance</th>
+        </tr></thead>
+        <tbody>
+        {% for name, data in stress_data.historical_crises.items() %}
+        {% if data.portfolio_return is not none %}
+        <tr>
+          <td>{{ name }}</td>
+          <td class="num negative">{{ "{:+.1f}".format(data.spy_return * 100) }}%</td>
+          <td class="num {{ 'positive' if data.portfolio_return >= data.spy_return else 'negative' }}">{{ "{:+.1f}".format(data.portfolio_return * 100) }}%</td>
+          <td class="num {{ 'positive' if data.relative_performance >= 0 else 'negative' }}">{{ "{:+.1f}".format(data.relative_performance * 100) }}%</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% for name, data in stress_data.single_day_shocks.items() %}
+        <tr>
+          <td>{{ name }} (single day)</td>
+          <td class="num negative">{{ "{:+.1f}".format(data.market_shock * 100) }}%</td>
+          <td class="num negative">{{ "{:+.1f}".format(data.portfolio_impact_pct) }}%</td>
+          <td class="num">—</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td>+100bps Rate Hike</td>
+          <td class="num">+1.00%</td>
+          <td class="num {{ 'positive' if stress_data.rate_hike_100bps.estimated_portfolio_impact >= 0 else 'negative' }}">{{ "{:+.2f}".format(stress_data.rate_hike_100bps.estimated_portfolio_impact_pct) }}%</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Mild Recession (−10% earnings)</td>
+          <td class="num">Macro</td>
+          <td class="num negative">{{ "{:+.2f}".format(stress_data.recession_mild.estimated_price_impact_pct) }}%</td>
+          <td class="num">—</td>
+        </tr>
+        <tr>
+          <td>Severe Recession (−25% earnings)</td>
+          <td class="num">Macro</td>
+          <td class="num negative">{{ "{:+.2f}".format(stress_data.recession_severe.estimated_price_impact_pct) }}%</td>
+          <td class="num">—</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    {% if charts.stress_test %}
+    <div class="chart-wrap" style="margin-top:16px;">
+      <img src="data:image/png;base64,{{ charts.stress_test }}" alt="Stress Test">
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- ═══ MONTE CARLO ═══ -->
+  <div class="section">
+    <div class="section-title">Monte Carlo Simulation</div>
+    {% if charts.monte_carlo %}
+    <div class="chart-wrap">
+      <img src="data:image/png;base64,{{ charts.monte_carlo }}" alt="Monte Carlo Fan Chart">
+      <div class="chart-caption">10,000 simulation paths — 126 trading day horizon. Shaded bands show interquartile range (dark) and 5th–95th percentile (light).</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══ HOLDINGS DETAIL ═══ -->
+  <div class="section">
+    <div class="section-title">Holdings Detail</div>
+    {% if charts.sector_allocation %}
+    <div class="chart-wrap">
+      <img src="data:image/png;base64,{{ charts.sector_allocation }}" alt="Sector Allocation">
+    </div>
+    {% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Ticker</th>
+          <th>Sector</th>
+          <th class="num">Shares</th>
+          <th class="num">Cost Basis</th>
+          <th class="num">Curr. Price</th>
+          <th class="num">Value</th>
+          <th class="num">Unreal. P&amp;L</th>
+          <th class="num">Return</th>
+          <th class="num">Weight</th>
+        </tr></thead>
+        <tbody>
+        {% for h in holdings %}
+        <tr>
+          <td><strong>{{ h.ticker }}</strong></td>
+          <td>{{ h.sector }}</td>
+          <td class="num">{{ h.shares }}</td>
+          <td class="num">${{ "{:.2f}".format(h.cost_basis) }}</td>
+          <td class="num">${{ "{:.2f}".format(h.price) }}</td>
+          <td class="num">${{ "{:,.2f}".format(h.value) }}</td>
+          <td class="num {{ 'positive' if h.pnl >= 0 else 'negative' }}">${{ "{:+,.2f}".format(h.pnl) }}</td>
+          <td class="num {{ 'positive' if h.pnl_pct >= 0 else 'negative' }}">{{ "{:+.1f}".format(h.pnl_pct) }}%</td>
+          <td class="num">{{ "{:.1f}".format(h.weight * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ COMPLIANCE ═══ -->
+  <div class="section">
+    <div class="section-title">Compliance & GIPS Notes</div>
+    <div class="compliance-box">
+      <strong>GIPS Disclosure & Performance Presentation</strong>
+      This report is for informational purposes only and does not constitute an offer to buy or sell securities.
+      Performance figures are based on {{ lookback_days }} trading days of historical data sourced from Yahoo Finance (yfinance).
+      Returns are calculated on a daily total-return basis assuming no transaction costs or slippage.
+      Past performance is not indicative of future results.
+      <br><br>
+      <strong>Risk Disclosures</strong>
+      Value-at-Risk (VaR) estimates assume a normal distribution of returns. Historical simulation VaR uses the empirical return distribution.
+      Conditional VaR (CVaR/Expected Shortfall) provides the expected loss beyond the VaR threshold.
+      Factor exposures are estimated via OLS regression on Fama-French 5-factor data; statistical significance is indicated by p-values.
+      Stress test scenarios replay historical crises and hypothetical shocks — they are not predictions of future performance.
+      <br><br>
+      <strong>Data Sources</strong>
+      Price data: Yahoo Finance via yfinance.
+      Factor data: Kenneth French Data Library (Dartmouth).
+      Benchmark: {{ benchmark_label }} (SPDR S&amp;P 500 ETF).
+      Report generated: {{ generated_at }}.
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="report-footer">
+    <div>{{ fund_name }} · Institutional Analytics Report · {{ report_date }}</div>
+    <div class="footer-disclaimer">
+      This document is confidential and intended solely for the use of the individual or entity to which it is addressed.
+      The information contained herein has been obtained from sources believed to be reliable, but no guarantee, warranty or
+      representation, express or implied, is given as to its accuracy or completeness.
+      All opinions expressed are subject to change without notice.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

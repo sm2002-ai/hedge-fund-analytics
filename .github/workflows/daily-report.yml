@@ -1,0 +1,67 @@
+name: Daily Hedge Fund Report
+
+on:
+  schedule:
+    # 7:00 AM Guatemala time (UTC-6) = 13:00 UTC
+    - cron: '0 13 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: 'Lookback trading days'
+        required: false
+        default: '252'
+      send_email:
+        description: 'Send email report (true/false)'
+        required: false
+        default: 'true'
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate report
+        env:
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FUND_NAME: ${{ secrets.FUND_NAME }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          LOOKBACK=${{ github.event.inputs.lookback_days || '252' }}
+          SEND_EMAIL=${{ github.event.inputs.send_email || 'true' }}
+
+          if [ "$SEND_EMAIL" = "true" ]; then
+            python main.py --portfolio portfolio.csv --lookback $LOOKBACK
+          else
+            python main.py --portfolio portfolio.csv --lookback $LOOKBACK --no-email
+          fi
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hedge-fund-report-${{ github.run_number }}
+          path: report_*.html
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Report generation failed. Check logs above."
