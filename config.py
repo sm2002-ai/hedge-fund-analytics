@@ -31,6 +31,15 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
+# Scoring methodology weights used by financial_analysis.py
+ANALYSIS_SCORE_WEIGHTS = {
+    "profitability": 0.35,   # gross/op/net margin, ROE, ROA
+    "value":         0.25,   # P/E, fwd P/E, P/B, EV/EBITDA (positive values only)
+    "growth":        0.25,   # revenue YoY growth
+    "risk":          0.15,   # beta, debt/equity (lower = better)
+}
+PORTFOLIO_LAST_UPDATED = "2026-04-18"
+
 BLOOMBERG_NAVY = "#003153"
 BLOOMBERG_GOLD = "#F4C430"
 BLOOMBERG_SLATE = "#708090"

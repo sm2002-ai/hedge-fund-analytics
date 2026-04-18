@@ -128,9 +128,12 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     s["score_profitability"] = pd.concat(prof_components, axis=1).mean(axis=1)
 
     # --- Value (lower ratio = better, so invert) ---
+    # Replace negative valuation ratios with NaN — negative P/E or EV/EBITDA
+    # means the company has no earnings/EBITDA and is NOT "cheap".
     val_components = []
     for col in ["pe", "fwd_pe", "pb", "ev_ebitda"]:
-        r = percentile_rank(s[col], higher_is_better=False)
+        cleaned = s[col].where(s[col] > 0)   # NaN out non-positive values
+        r = percentile_rank(cleaned, higher_is_better=False)
         val_components.append(r)
     s["score_value"] = pd.concat(val_components, axis=1).mean(axis=1)
 
