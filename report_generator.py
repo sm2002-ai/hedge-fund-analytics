@@ -59,7 +59,7 @@ def build_holdings_table(portfolio_df: pd.DataFrame, prices: pd.DataFrame) -> li
             price = cost
         value = shares * price
         pnl = value - shares * cost
-        pnl_pct = (price / cost - 1) * 100
+        pnl_pct = (price / cost - 1) * 100 if cost != 0 else 0.0
         total_value += value
         rows.append({
             "ticker": ticker, "sector": sector, "shares": int(shares),
