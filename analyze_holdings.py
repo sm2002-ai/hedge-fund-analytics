@@ -63,12 +63,12 @@ def score_stock(fundamentals: dict) -> dict:
     om_score   = min(max(safe(fundamentals["op_margin"]) / 0.30, 0), 1)
     profitability = (roe_score + pm_score + om_score) / 3
 
-    # Value (lower P/E and P/B is better; 0 means very cheap, 1 means overpriced reversed)
+    # Value (lower P/E and P/B is better; negative means no earnings/negative equity → 0)
     pe_raw = safe(fundamentals["pe"], default=40)
-    pe_score = 1 - min(max((pe_raw - 10) / 60, 0), 1)  # 10→1.0, 70→0.0
+    pe_score = 0.0 if pe_raw <= 0 else 1 - min(max((pe_raw - 10) / 60, 0), 1)
 
     pb_raw = safe(fundamentals["pb"], default=5)
-    pb_score = 1 - min(max((pb_raw - 1) / 15, 0), 1)   # 1→1.0, 16→0.0
+    pb_score = 0.0 if pb_raw <= 0 else 1 - min(max((pb_raw - 1) / 15, 0), 1)
 
     value = (pe_score + pb_score) / 2
 

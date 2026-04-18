@@ -1,8 +1,8 @@
 ticker,shares,cost_basis,sector,weight
-TENB,30,16.9833,Cybersecurity,0.1663
-VRNS,16,22.2169,Cybersecurity,0.1258
-LOAR,5,56.9,Aerospace & Defense,0.2451
-NOW,2,83.82,Software & Cloud,0.1345
-PANW,1,175.14,Cybersecurity,0.147
-CPNG,14,20.6579,E-Commerce,0.0896
-WVE,19,7.5176,Healthcare & Biotech,0.0917
+TENB,30,16.9833,Cybersecurity,0.1726
+VRNS,16,22.2169,Cybersecurity,0.1305
+LOAR,5,56.9,Aerospace & Defense,0.2542
+NOW,2,83.82,Software & Cloud,0.1395
+PANW,1,175.14,Cybersecurity,0.1525
+CPNG,14,20.6579,E-Commerce,0.0929
+WVE,19,7.5176,Healthcare & Biotech,0.0577
