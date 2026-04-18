@@ -14,8 +14,7 @@ def brinson_fachler(
     Brinson-Fachler performance attribution at the security level.
     Returns allocation, selection, and interaction effects.
     """
-    tickers = portfolio_weights.index.intersection(benchmark_weights.index)
-    tickers = tickers.union(portfolio_weights.index).union(benchmark_weights.index)
+    tickers = portfolio_weights.index.union(benchmark_weights.index)
 
     wp = portfolio_weights.reindex(tickers, fill_value=0.0)
     wb = benchmark_weights.reindex(tickers, fill_value=0.0)

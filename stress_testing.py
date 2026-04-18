@@ -33,9 +33,7 @@ def run_historical_crisis(portfolio_returns: pd.Series, portfolio_weights: dict)
 
         spy_total = float((1 + period_spy).prod() - 1)
 
-        portfolio_period = portfolio_returns.loc[
-            portfolio_returns.index.slice_locs(start, end)[0]: portfolio_returns.index.slice_locs(start, end)[1]
-        ]
+        portfolio_period = portfolio_returns.loc[start:end]
         if len(portfolio_period) > 5:
             port_total = float((1 + portfolio_period).prod() - 1)
         else:
