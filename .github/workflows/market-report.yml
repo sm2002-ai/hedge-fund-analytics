@@ -1,0 +1,71 @@
+name: Weekly Market Opportunities Report
+
+on:
+  schedule:
+    # Monday 6:00 AM Guatemala time (UTC-6) = 12:00 UTC
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: 'Lookback trading days'
+        required: false
+        default: '252'
+      top_ideas:
+        description: 'Number of top ideas to surface'
+        required: false
+        default: '10'
+      send_email:
+        description: 'Send email report (true/false)'
+        required: false
+        default: 'true'
+
+jobs:
+  generate-market-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate market report
+        env:
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FUND_NAME: ${{ secrets.FUND_NAME }}
+        run: |
+          LOOKBACK=${{ github.event.inputs.lookback_days || '252' }}
+          TOP=${{ github.event.inputs.top_ideas || '10' }}
+          SEND_EMAIL=${{ github.event.inputs.send_email || 'true' }}
+
+          if [ "$SEND_EMAIL" = "true" ]; then
+            python market_report.py --lookback $LOOKBACK --top-ideas $TOP
+          else
+            python market_report.py --lookback $LOOKBACK --top-ideas $TOP --no-email
+          fi
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: market-report-${{ github.run_number }}
+          path: market_report_*.html
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Market report generation failed. Check logs above."

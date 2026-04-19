@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ fund_name }} — Market Opportunities {{ report_date }}</title>
+<style>
+  :root {
+    --navy: #003153;
+    --gold: #F4C430;
+    --slate: #708090;
+    --light: #F5F5F0;
+    --white: #FFFFFF;
+    --red: #C73E1D;
+    --green: #2A7F4F;
+    --text: #1A1A2E;
+    --border: #D8D8D8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: #EBEBEB;
+    line-height: 1.5;
+  }
+  .page { max-width: 960px; margin: 0 auto; background: var(--white); }
+
+  .report-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 32px 40px;
+  }
+  .report-header::after {
+    content: '';
+    display: block;
+    height: 4px;
+    background: var(--gold);
+    margin-top: 24px;
+  }
+  .fund-name { font-size: 26px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .report-subtitle { font-size: 13px; opacity: 0.75; letter-spacing: 0.3px; }
+  .header-meta { margin-top: 16px; display: flex; gap: 40px; font-size: 12px; opacity: 0.85; flex-wrap: wrap; }
+  .header-meta span { display: flex; flex-direction: column; }
+  .header-meta strong { font-size: 15px; margin-top: 2px; }
+
+  .section { padding: 28px 40px; border-bottom: 1px solid var(--border); }
+  .section-title {
+    font-size: 16px; font-weight: 700; color: var(--navy);
+    padding-bottom: 10px; border-bottom: 2px solid var(--navy);
+    margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .section-sub {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    margin: 18px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+  .kpi-card {
+    background: var(--light); border: 1px solid var(--border);
+    border-radius: 4px; padding: 14px 16px; text-align: center;
+  }
+  .kpi-label {
+    font-size: 10px; color: var(--slate); text-transform: uppercase;
+    letter-spacing: 0.6px; font-weight: 600; margin-bottom: 4px;
+  }
+  .kpi-value { font-size: 22px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .kpi-value.positive { color: var(--green); }
+  .kpi-value.negative { color: var(--red); }
+  .kpi-sub { font-size: 10px; color: var(--slate); margin-top: 3px; }
+
+  .regime-banner {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    background: var(--navy); color: var(--white);
+    padding: 18px 20px; border-radius: 6px; margin-bottom: 18px;
+  }
+  .regime-cell { text-align: center; }
+  .regime-cell .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; opacity: 0.75; }
+  .regime-cell .value { font-size: 20px; font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; }
+  .bias-riskon { color: #9be8a6; }
+  .bias-riskoff { color: #ffb3a9; }
+  .bias-neutral { color: var(--gold); }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead tr { background: var(--navy); color: var(--white); }
+  thead th {
+    padding: 9px 12px; text-align: left; font-weight: 600;
+    font-size: 11px; letter-spacing: 0.4px; white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--light); }
+  tbody tr:hover { background: #E8EEF5; }
+  tbody td {
+    padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .positive { color: var(--green); font-weight: 600; }
+  .negative { color: var(--red); font-weight: 600; }
+  .rank-badge {
+    display: inline-block; min-width: 22px; padding: 1px 6px;
+    background: var(--gold); color: var(--navy); font-weight: 700;
+    border-radius: 3px; font-size: 10px; text-align: center;
+  }
+
+  .compliance-box {
+    background: var(--light); border-left: 4px solid var(--navy);
+    padding: 16px 20px; border-radius: 0 4px 4px 0;
+    font-size: 11px; color: var(--slate); line-height: 1.7;
+  }
+  .compliance-box strong { color: var(--navy); display: block; margin-bottom: 6px; font-size: 12px; }
+
+  .report-footer {
+    background: var(--navy); color: rgba(255,255,255,0.6);
+    padding: 20px 40px; font-size: 10px; line-height: 1.6;
+  }
+  .footer-disclaimer { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15); }
+
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .regime-banner { grid-template-columns: 1fr; gap: 10px; }
+    .section { padding: 20px 16px; }
+    .report-header { padding: 24px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="report-header">
+    <div class="fund-name">{{ fund_name }}</div>
+    <div class="report-subtitle">Market Opportunities Report · {{ report_date }}</div>
+    <div class="header-meta">
+      <span>Universe <strong>{{ universe_size }} stocks</strong></span>
+      <span>Lookback <strong>{{ lookback_days }}d</strong></span>
+      {% if regime.spot %}<span>S&amp;P 500 <strong>{{ "{:,.2f}".format(regime.spot) }}</strong></span>{% endif %}
+      {% if regime.vix %}<span>VIX <strong>{{ "{:.1f}".format(regime.vix) }}</strong></span>{% endif %}
+    </div>
+  </div>
+
+  {% if regime %}
+  <div class="section">
+    <div class="section-title">Market Regime</div>
+    <div class="regime-banner">
+      <div class="regime-cell">
+        <div class="label">Trend</div>
+        <div class="value">{{ regime.trend|upper }}</div>
+      </div>
+      <div class="regime-cell">
+        <div class="label">Volatility</div>
+        <div class="value">{{ regime.vol_regime|upper }}</div>
+      </div>
+      <div class="regime-cell">
+        <div class="label">Bias</div>
+        <div class="value {{ 'bias-riskon' if regime.bias == 'risk-on' else ('bias-riskoff' if regime.bias == 'risk-off' else 'bias-neutral') }}">{{ regime.bias|upper }}</div>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">SPY 50D SMA</div>
+        <div class="kpi-value">{{ "{:,.2f}".format(regime.sma_50) }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">SPY 200D SMA</div>
+        <div class="kpi-value">{{ "{:,.2f}".format(regime.sma_200) }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">SPY 1M</div>
+        <div class="kpi-value {{ 'positive' if regime.spy_1m >= 0 else 'negative' }}">{{ "{:+.2f}".format(regime.spy_1m * 100) }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">SPY 3M</div>
+        <div class="kpi-value {{ 'positive' if regime.spy_3m >= 0 else 'negative' }}">{{ "{:+.2f}".format(regime.spy_3m * 100) }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">SPY YTD</div>
+        <div class="kpi-value {{ 'positive' if regime.spy_ytd >= 0 else 'negative' }}">{{ "{:+.2f}".format(regime.spy_ytd * 100) }}%</div>
+      </div>
+      {% if risk %}
+      <div class="kpi-card">
+        <div class="kpi-label">Market VaR 95%</div>
+        <div class="kpi-value negative">{{ "{:.2f}".format(risk.var_95 * 100) }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Market CVaR 95%</div>
+        <div class="kpi-value negative">{{ "{:.2f}".format(risk.cvar_95 * 100) }}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Market Max DD</div>
+        <div class="kpi-value negative">{{ "{:.1f}".format(risk.max_drawdown * 100) }}%</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if macro %}
+  <div class="section">
+    <div class="section-title">Macro Dashboard</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Ticker</th><th>Asset</th>
+          <th class="num">Last</th>
+          <th class="num">1M</th>
+          <th class="num">3M</th>
+          <th class="num">YTD</th>
+        </tr></thead>
+        <tbody>
+        {% for row in macro %}
+        <tr>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.label }}</td>
+          <td class="num">{{ "{:,.2f}".format(row.last) }}</td>
+          <td class="num {{ 'positive' if row.r_1m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_1m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_3m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_3m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_ytd >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_ytd * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if sectors %}
+  <div class="section">
+    <div class="section-title">Sector Leaderboard</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ETF</th><th>Sector</th>
+          <th class="num">1M</th><th class="num">3M</th><th class="num">YTD</th>
+          <th class="num">Vol</th><th class="num">Sharpe</th><th class="num">β vs SPY</th>
+        </tr></thead>
+        <tbody>
+        {% for row in sectors %}
+        <tr>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.sector }}</td>
+          <td class="num {{ 'positive' if row.r_1m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_1m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_3m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_3m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_ytd >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_ytd * 100) }}%</td>
+          <td class="num">{{ "{:.1f}".format(row.vol * 100) }}%</td>
+          <td class="num {{ 'positive' if row.sharpe >= 1 else ('negative' if row.sharpe < 0 else '') }}">{{ "{:.2f}".format(row.sharpe) }}</td>
+          <td class="num">{{ "{:.2f}".format(row.beta) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if factors %}
+  <div class="section">
+    <div class="section-title">Fama-French Factor Performance</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Factor</th>
+          <th class="num">1M</th><th class="num">3M</th><th class="num">YTD</th>
+        </tr></thead>
+        <tbody>
+        {% for row in factors %}
+        <tr>
+          <td><strong>{{ row.factor }}</strong></td>
+          <td class="num {{ 'positive' if row.r_1m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_1m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_3m >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_3m * 100) }}%</td>
+          <td class="num {{ 'positive' if row.r_ytd >= 0 else 'negative' }}">{{ "{:+.2f}".format(row.r_ytd * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:11px; color:var(--slate); margin-top:8px;">
+      Mkt-RF = market excess return · SMB = small minus big · HML = high minus low book/market ·
+      RMW = robust minus weak profitability · CMA = conservative minus aggressive investment.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if top_ideas %}
+  <div class="section">
+    <div class="section-title">Top {{ top_ideas|length }} Ideas — Composite Score</div>
+    <p style="font-size:12px; color:var(--slate); margin-bottom:12px;">
+      Equal-weighted z-score blend of momentum, Sharpe, trend, volatility (inverse) and drawdown (inverse).
+      Larger composite = more attractive long entry.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Ticker</th><th>Sector</th>
+          <th class="num">Composite</th>
+          <th class="num">Momentum</th>
+          <th class="num">Sharpe</th>
+          <th class="num">Trend</th>
+          <th class="num">Vol</th>
+          <th class="num">Max DD</th>
+        </tr></thead>
+        <tbody>
+        {% for row in top_ideas %}
+        <tr>
+          <td><span class="rank-badge">{{ loop.index }}</span></td>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.sector }}</td>
+          <td class="num positive">{{ "{:+.2f}".format(row.composite) }}</td>
+          <td class="num {{ 'positive' if row.momentum >= 0 else 'negative' }}">{{ "{:+.1f}".format(row.momentum * 100) }}%</td>
+          <td class="num {{ 'positive' if row.sharpe >= 1 else ('negative' if row.sharpe < 0 else '') }}">{{ "{:.2f}".format(row.sharpe) }}</td>
+          <td class="num {{ 'positive' if row.trend >= 0 else 'negative' }}">{{ "{:+.1f}".format(row.trend * 100) }}%</td>
+          <td class="num">{{ "{:.1f}".format(row.volatility * 100) }}%</td>
+          <td class="num negative">{{ "{:.1f}".format(row.max_drawdown * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if momentum_leaders %}
+  <div class="section">
+    <div class="section-title">Momentum Leaders</div>
+    <p style="font-size:12px; color:var(--slate); margin-bottom:12px;">
+      Highest 12M-1M total return (standard academic momentum definition — last month skipped to avoid reversal noise).
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Ticker</th><th>Sector</th>
+          <th class="num">12M-1M Return</th>
+          <th class="num">Sharpe</th>
+          <th class="num">Trend</th>
+          <th class="num">Vol</th>
+        </tr></thead>
+        <tbody>
+        {% for row in momentum_leaders %}
+        <tr>
+          <td><span class="rank-badge">{{ loop.index }}</span></td>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.sector }}</td>
+          <td class="num positive">{{ "{:+.1f}".format(row.momentum * 100) }}%</td>
+          <td class="num">{{ "{:.2f}".format(row.sharpe) }}</td>
+          <td class="num {{ 'positive' if row.trend >= 0 else 'negative' }}">{{ "{:+.1f}".format(row.trend * 100) }}%</td>
+          <td class="num">{{ "{:.1f}".format(row.volatility * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if quality_leaders %}
+  <div class="section">
+    <div class="section-title">Quality — Low Vol, High Sharpe</div>
+    <p style="font-size:12px; color:var(--slate); margin-bottom:12px;">
+      Below-median volatility and above-median Sharpe. Classic defensive/quality bucket that tends to hold up in drawdowns.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Ticker</th><th>Sector</th>
+          <th class="num">Sharpe</th>
+          <th class="num">Vol</th>
+          <th class="num">Momentum</th>
+          <th class="num">Max DD</th>
+        </tr></thead>
+        <tbody>
+        {% for row in quality_leaders %}
+        <tr>
+          <td><span class="rank-badge">{{ loop.index }}</span></td>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.sector }}</td>
+          <td class="num positive">{{ "{:.2f}".format(row.sharpe) }}</td>
+          <td class="num">{{ "{:.1f}".format(row.volatility * 100) }}%</td>
+          <td class="num {{ 'positive' if row.momentum >= 0 else 'negative' }}">{{ "{:+.1f}".format(row.momentum * 100) }}%</td>
+          <td class="num negative">{{ "{:.1f}".format(row.max_drawdown * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if value_bounce %}
+  <div class="section">
+    <div class="section-title">Value Bounce Candidates</div>
+    <p style="font-size:12px; color:var(--slate); margin-bottom:12px;">
+      Bottom-quartile trailing momentum but positive 50/200 SMA crossover — potentially early mean-reversion names.
+      Higher risk bucket; size positions accordingly.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Ticker</th><th>Sector</th>
+          <th class="num">Momentum</th>
+          <th class="num">Trend</th>
+          <th class="num">Sharpe</th>
+          <th class="num">Vol</th>
+        </tr></thead>
+        <tbody>
+        {% for row in value_bounce %}
+        <tr>
+          <td><span class="rank-badge">{{ loop.index }}</span></td>
+          <td><strong>{{ row.ticker }}</strong></td>
+          <td>{{ row.sector }}</td>
+          <td class="num negative">{{ "{:+.1f}".format(row.momentum * 100) }}%</td>
+          <td class="num positive">{{ "{:+.1f}".format(row.trend * 100) }}%</td>
+          <td class="num">{{ "{:.2f}".format(row.sharpe) }}</td>
+          <td class="num">{{ "{:.1f}".format(row.volatility * 100) }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-title">Methodology & Disclosures</div>
+    <div class="compliance-box">
+      <strong>Scope</strong>
+      This report screens the current S&amp;P 500 constituent list for attractive long entry candidates using a blend of
+      momentum, quality (Sharpe / low vol) and trend-following signals. It is a market-wide research memo, not a portfolio review.
+      <br><br>
+      <strong>Signals</strong>
+      Momentum: 12-month total return skipping the most recent month (standard in academic momentum research).
+      Volatility: annualized realized volatility over the trailing 126 trading days.
+      Sharpe: annualized Sharpe ratio over the trailing 252 trading days (zero risk-free rate assumption).
+      Trend: 50-day SMA divided by 200-day SMA minus 1. Positive readings indicate an uptrend.
+      Max drawdown: largest peak-to-trough decline over the lookback window.
+      Composite score: equal-weighted sum of z-scores, positive on momentum/Sharpe/trend, negative on volatility/drawdown magnitude.
+      <br><br>
+      <strong>Regime Classification</strong>
+      Trend determined by SPY spot vs 50/200-day SMAs. Volatility regime determined by VIX level
+      (low &lt;15, normal 15–25, elevated 25–35, stress ≥35). Bias aggregates both: uptrend + low/normal vol = risk-on;
+      downtrend or stress vol = risk-off; otherwise neutral.
+      <br><br>
+      <strong>Data Sources</strong>
+      Price data: Yahoo Finance via yfinance. Universe: S&amp;P 500 constituent list from Wikipedia
+      (with static fallback for offline runs). Factor data: Kenneth French Data Library.
+      Sector mapping: SPDR sector ETFs (XLK, XLF, XLV, XLY, XLP, XLE, XLI, XLU, XLB, XLRE, XLC).
+      <br><br>
+      <strong>Disclaimer</strong>
+      This report is for informational purposes only and does not constitute investment advice or an offer to buy or sell securities.
+      Past performance is not indicative of future results. Returns exclude transaction costs, slippage and taxes.
+      Report generated: {{ generated_at }}.
+    </div>
+  </div>
+
+  <div class="report-footer">
+    <div>{{ fund_name }} · Market Opportunities Report · {{ report_date }}</div>
+    <div class="footer-disclaimer">
+      Confidential. Data obtained from sources believed to be reliable; no guarantee is given as to accuracy or completeness.
+      All opinions are subject to change without notice.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
