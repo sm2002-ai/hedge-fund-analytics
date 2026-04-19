@@ -18,7 +18,7 @@ on:
 jobs:
   generate-report:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
 
     steps:
       - name: Checkout repository
@@ -32,6 +32,12 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Run Medallion screener (regenerate portfolio.csv + Yartseva scan)
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: python market_screener.py
 
       - name: Generate report
         env:
@@ -58,7 +64,11 @@ jobs:
         if: always()
         with:
           name: hedge-fund-report-${{ github.run_number }}
-          path: report_*.html
+          path: |
+            report_*.html
+            portfolio.csv
+            portfolio_extended.csv
+            yartseva_scan.csv
           retention-days: 30
 
       - name: Notify on failure
