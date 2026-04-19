@@ -36,18 +36,28 @@ def compute_rolling_var(returns: pd.Series, window: int = 30, confidence: float 
 def compute_sharpe(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
     """Annualized Sharpe ratio."""
     excess = returns - rf / 252
-    if excess.std() == 0:
+    std = excess.std()
+    # pandas std() can return ~1e-19 for a constant series due to FP noise,
+    # so compare against a small tolerance rather than exact zero.
+    if not np.isfinite(std) or std < 1e-12:
         return 0.0
-    return float(excess.mean() / excess.std() * np.sqrt(252))
+    return float(excess.mean() / std * np.sqrt(252))
 
 
 def compute_sortino(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
     """Annualized Sortino ratio using downside deviation."""
     excess = returns - rf / 252
     downside = excess[excess < 0]
-    if len(downside) == 0 or downside.std() == 0:
+    if len(downside) == 0:
         return 0.0
-    return float(excess.mean() / downside.std() * np.sqrt(252))
+    d_std = downside.std()
+    if not np.isfinite(d_std) or d_std < 1e-12:
+        return 0.0
+    return float(excess.mean() / d_std * np.sqrt(252))
+
+
+def _format_index_date(idx) -> str:
+    return idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
 
 
 def compute_max_drawdown(returns: pd.Series) -> dict:
@@ -57,18 +67,38 @@ def compute_max_drawdown(returns: pd.Series) -> dict:
     drawdown = (cum - rolling_max) / rolling_max
 
     max_dd = float(drawdown.min())
-    trough_idx = drawdown.idxmin()
-    peak_idx = rolling_max[:trough_idx].idxmax()
 
-    recovered = cum[trough_idx:][cum[trough_idx:] >= rolling_max[trough_idx]]
+    if max_dd == 0 or cum.empty:
+        first_idx = cum.index[0] if not cum.empty else None
+        return {
+            "max_drawdown": 0.0,
+            "peak_date": _format_index_date(first_idx) if first_idx is not None else None,
+            "trough_date": _format_index_date(first_idx) if first_idx is not None else None,
+            "recovery_date": None,
+            "recovery_days": None,
+            "drawdown_series": drawdown,
+        }
+
+    trough_idx = drawdown.idxmin()
+    # rolling_max.loc[:trough_idx] is inclusive on DatetimeIndex but can be
+    # exclusive on non-datetime indices — use iloc via get_loc to be safe.
+    trough_loc = cum.index.get_loc(trough_idx)
+    peak_idx = rolling_max.iloc[: trough_loc + 1].idxmax()
+
+    post_trough = cum.iloc[trough_loc:]
+    recovered = post_trough[post_trough >= rolling_max.loc[trough_idx]]
     recovery_idx = recovered.index[0] if not recovered.empty else None
-    recovery_days = (recovery_idx - trough_idx).days if recovery_idx else None
+
+    recovery_days = None
+    if recovery_idx is not None:
+        delta = recovery_idx - trough_idx
+        recovery_days = delta.days if hasattr(delta, "days") else int(delta)
 
     return {
         "max_drawdown": max_dd,
-        "peak_date": peak_idx.strftime("%Y-%m-%d") if hasattr(peak_idx, "strftime") else str(peak_idx),
-        "trough_date": trough_idx.strftime("%Y-%m-%d") if hasattr(trough_idx, "strftime") else str(trough_idx),
-        "recovery_date": recovery_idx.strftime("%Y-%m-%d") if recovery_idx and hasattr(recovery_idx, "strftime") else None,
+        "peak_date": _format_index_date(peak_idx),
+        "trough_date": _format_index_date(trough_idx),
+        "recovery_date": _format_index_date(recovery_idx) if recovery_idx is not None else None,
         "recovery_days": recovery_days,
         "drawdown_series": drawdown,
     }
