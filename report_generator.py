@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -31,16 +32,24 @@ def fetch_price_data(tickers: list, benchmark: str, lookback_days: int = 252) ->
         raw = raw.to_frame(name=all_tickers[0])
 
     raw = raw.dropna(how="all").tail(lookback_days + 1)
-    returns = raw.pct_change().dropna()
+    # how="all" keeps days where at least one ticker has data. With large
+    # portfolios of micro-caps, `dropna(how="any")` would drop nearly every row.
+    returns = raw.pct_change().dropna(how="all")
     return raw, returns
 
 
 def build_portfolio_returns(returns: pd.DataFrame, weights: dict) -> pd.Series:
-    """Compute weighted portfolio daily returns."""
+    """Compute weighted portfolio daily returns. Missing tickers on a given day
+    contribute zero; weights are renormalized across tickers with data that day."""
     port_tickers = [t for t in weights if t in returns.columns]
     w = pd.Series({t: weights[t] for t in port_tickers})
-    w = w / w.sum()
-    return (returns[port_tickers] * w).sum(axis=1).rename("Portfolio")
+    sub = returns[port_tickers]
+    mask = sub.notna()
+    # per-day active weights — zero for NaN days, renormalized across present tickers
+    active_w = mask.mul(w, axis=1)
+    row_sum = active_w.sum(axis=1).replace(0, np.nan)
+    active_w = active_w.div(row_sum, axis=0)
+    return (sub.fillna(0) * active_w).sum(axis=1).rename("Portfolio")
 
 
 def build_holdings_table(portfolio_df: pd.DataFrame, prices: pd.DataFrame) -> list:

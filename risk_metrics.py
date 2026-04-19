@@ -52,6 +52,11 @@ def compute_sortino(returns: pd.Series, rf: float = RISK_FREE_RATE) -> float:
 
 def compute_max_drawdown(returns: pd.Series) -> dict:
     """Maximum drawdown with peak, trough, and recovery info."""
+    returns = returns.dropna()
+    if returns.empty:
+        return {"max_drawdown": 0.0, "peak_date": None, "trough_date": None,
+                "recovery_date": None, "recovery_days": None,
+                "drawdown_series": pd.Series(dtype=float)}
     cum = (1 + returns).cumprod()
     rolling_max = cum.cummax()
     drawdown = (cum - rolling_max) / rolling_max
