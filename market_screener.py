@@ -323,7 +323,7 @@ def score_multibagger(f: dict) -> tuple[float, dict, list]:
     else:
         tier2["small_vs_tam"] = False
 
-    tier2_score = (t2 / 28) * 28  # scaled to 28 pts
+    tier2_score = t2  # max 28 pts
 
     # ── Tier 3 ────────────────────────────────────────────────────────────
     t3 = 0.0
@@ -367,18 +367,36 @@ def score_multibagger(f: dict) -> tuple[float, dict, list]:
     return round(multibagger_score, 1), breakdown, fail_reasons
 
 
+_SPY_RETURNS_CACHE: dict = {}
+
+
+def _get_spy_returns(lookback: int = 252) -> pd.Series:
+    """Fetch SPY returns once and cache for the process lifetime."""
+    if lookback not in _SPY_RETURNS_CACHE:
+        start = (datetime.date.today() - datetime.timedelta(days=lookback * 2)).strftime("%Y-%m-%d")
+        raw = yf.download("SPY", start=start, progress=False, auto_adjust=True)["Close"]
+        raw = raw.dropna().tail(lookback + 1)
+        _SPY_RETURNS_CACHE[lookback] = raw.pct_change().dropna()
+    return _SPY_RETURNS_CACHE[lookback]
+
+
 def compute_alpha_score(ticker: str, lookback: int = 252) -> float:
     """Compute a simple alpha score: annualized excess return vs SPY (0-100 scale)."""
     try:
-        import datetime
+        spy_ret = _get_spy_returns(lookback)
         start = (datetime.date.today() - datetime.timedelta(days=lookback * 2)).strftime("%Y-%m-%d")
-        data = yf.download([ticker, "SPY"], start=start, progress=False, auto_adjust=True)["Close"]
-        if data.empty or ticker not in data.columns:
+        raw = yf.download(ticker, start=start, progress=False, auto_adjust=True)["Close"]
+        if raw.empty:
             return 50.0
-        data = data.dropna().tail(lookback + 1)
-        ret = data.pct_change().dropna()
-        stock_ann = float((1 + ret[ticker].mean()) ** 252 - 1)
-        spy_ann   = float((1 + ret["SPY"].mean()) ** 252 - 1)
+        raw = raw.dropna().tail(lookback + 1)
+        stock_ret = raw.pct_change().dropna()
+        # Align on common dates
+        aligned = pd.concat([stock_ret, spy_ret], axis=1, join="inner")
+        if aligned.empty or aligned.shape[0] < 20:
+            return 50.0
+        aligned.columns = ["stock", "spy"]
+        stock_ann = float((1 + aligned["stock"].mean()) ** 252 - 1)
+        spy_ann   = float((1 + aligned["spy"].mean()) ** 252 - 1)
         alpha = stock_ann - spy_ann
         return float(np.clip(50 + alpha * 100, 0, 100))
     except Exception:
