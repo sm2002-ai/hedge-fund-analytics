@@ -54,7 +54,7 @@ def _safe_read_html(url: str, table_index: int, column: str) -> list[str]:
         df = tables[table_index]
         if column not in df.columns:
             for c in df.columns:
-                if c.lower() == column.lower():
+                if str(c).lower() == column.lower():
                     column = c
                     break
         if column not in df.columns:
@@ -247,8 +247,6 @@ def compute_metrics(prices: pd.DataFrame, benchmark_prices: pd.Series) -> pd.Dat
         raise ValueError("Less than 60 trading days of data — cannot compute metrics.")
 
     bench_arr = bench.values  # shape (n,)
-    bench_mean = bench_arr.mean()
-    bench_var = bench_arr.var()
 
     results: list[dict] = []
 
@@ -269,8 +267,9 @@ def compute_metrics(prices: pd.DataFrame, benchmark_prices: pd.Series) -> pd.Dat
         b_c = bench.loc[common].values
         cov = np.cov(r_c, b_c, ddof=1)
         beta = cov[0, 1] / cov[1, 1] if cov[1, 1] != 0 else np.nan
-        # Jensen's alpha (annualized)
-        alpha = (r_mean - RISK_FREE_DAILY - beta * (bench_mean - RISK_FREE_DAILY)) * TRADING_DAYS
+        # Jensen's alpha (annualized) — use same-period bench mean so sparse tickers aren't biased
+        b_c_mean = b_c.mean()
+        alpha = (r_mean - RISK_FREE_DAILY - beta * (b_c_mean - RISK_FREE_DAILY)) * TRADING_DAYS
 
         # ---------- Sharpe ----------
         excess = r_arr - RISK_FREE_DAILY
@@ -282,9 +281,11 @@ def compute_metrics(prices: pd.DataFrame, benchmark_prices: pd.Series) -> pd.Dat
 
         # ---------- Returns ----------
         def _period_return(days: int) -> float:
-            if len(r_arr) < days:
+            # Use available data up to `days`; require at least half the window
+            available = len(r_arr)
+            if available < max(days // 2, 20):
                 return np.nan
-            return float(np.prod(1 + r_arr[-days:]) - 1)
+            return float(np.prod(1 + r_arr[-min(days, available):]) - 1)
 
         ret_1m = _period_return(21)
         ret_3m = _period_return(63)
@@ -304,13 +305,6 @@ def compute_metrics(prices: pd.DataFrame, benchmark_prices: pd.Series) -> pd.Dat
 
         momentum = np.nanmean([ma50_score, ma200_score]) if not (np.isnan(ma50_score) and np.isnan(ma200_score)) else np.nan
 
-        # ---------- Volume trend ----------
-        vol_trend = np.nan
-        try:
-            # We don't have volume in prices — skip if unavailable
-            pass
-        except Exception:
-            pass
 
         results.append(
             {
